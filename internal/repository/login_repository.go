@@ -7,6 +7,7 @@ import (
 	"github.com/choonhong/user-analytics/db/ent"
 	"github.com/choonhong/user-analytics/db/ent/dailyuniqueuser"
 	"github.com/choonhong/user-analytics/db/ent/monthlyuniqueuser"
+	"github.com/choonhong/user-analytics/db/ent/userlogin"
 	"github.com/choonhong/user-analytics/internal/domain"
 	"github.com/google/uuid"
 )
@@ -43,15 +44,12 @@ func (r *LoginRepository) RecordLoginTx(ctx context.Context, userID uuid.UUID, l
 }
 
 func insertLogin(ctx context.Context, tx *ent.Tx, userID uuid.UUID, loginTime time.Time) error {
-	err := tx.UserLogin.Create().
+	return tx.UserLogin.Create().
 		SetUserID(userID).
 		SetLoginTime(loginTime).
+		OnConflictColumns(userlogin.FieldUserID, userlogin.FieldLoginTime).
+		Ignore().
 		Exec(ctx)
-	if err != nil && !ent.IsConstraintError(err) {
-		return err
-	}
-
-	return nil
 }
 
 func insertRollups(ctx context.Context, tx *ent.Tx, userID uuid.UUID, loginTime time.Time) error {
@@ -62,19 +60,18 @@ func insertRollups(ctx context.Context, tx *ent.Tx, userID uuid.UUID, loginTime 
 	if err := tx.DailyUniqueUser.Create().
 		SetDate(date).
 		SetUserID(userID).
-		Exec(ctx); err != nil && !ent.IsConstraintError(err) {
+		OnConflictColumns(dailyuniqueuser.FieldDate, dailyuniqueuser.FieldUserID).
+		Ignore().
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	err := tx.MonthlyUniqueUser.Create().
+	return tx.MonthlyUniqueUser.Create().
 		SetMonth(month).
 		SetUserID(userID).
+		OnConflictColumns(monthlyuniqueuser.FieldMonth, monthlyuniqueuser.FieldUserID).
+		Ignore().
 		Exec(ctx)
-	if err != nil && !ent.IsConstraintError(err) {
-		return err
-	}
-
-	return nil
 }
 
 // CountDailyUniqueUsers returns unique users for a UTC calendar date.

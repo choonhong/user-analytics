@@ -1,4 +1,4 @@
-DATABASE_URL ?= postgres://analytics:analytics@localhost:5432/analytics?sslmode=disable
+DATABASE_URL ?= postgres://analytics:analytics@localhost:5433/analytics?sslmode=disable
 ADDR ?= :8080
 
 .PHONY: generate mocks test run run-detached down docker-up wait-pg
@@ -26,6 +26,6 @@ run:
 run-detached:
 	docker compose up -d --build
 
-# Tests on host against compose Postgres on localhost:5432
+# Tests on host against compose Postgres on localhost:5433 (avoids local Postgres on 5432)
 test: docker-up wait-pg
 	DATABASE_URL=$(DATABASE_URL) go test ./...

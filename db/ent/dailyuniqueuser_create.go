@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/choonhong/user-analytics/db/ent/dailyuniqueuser"
@@ -18,6 +19,7 @@ type DailyUniqueUserCreate struct {
 	config
 	mutation *DailyUniqueUserMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetDate sets the "date" field.
@@ -98,6 +100,7 @@ func (_c *DailyUniqueUserCreate) createSpec() (*DailyUniqueUser, *sqlgraph.Creat
 		_node = &DailyUniqueUser{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(dailyuniqueuser.Table, sqlgraph.NewFieldSpec(dailyuniqueuser.FieldID, field.TypeInt))
 	)
+	_spec.OnConflict = _c.conflict
 	if value, ok := _c.mutation.Date(); ok {
 		_spec.SetField(dailyuniqueuser.FieldDate, field.TypeString, value)
 		_node.Date = value
@@ -109,11 +112,186 @@ func (_c *DailyUniqueUserCreate) createSpec() (*DailyUniqueUser, *sqlgraph.Creat
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.DailyUniqueUser.Create().
+//		SetDate(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.DailyUniqueUserUpsert) {
+//			SetDate(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *DailyUniqueUserCreate) OnConflict(opts ...sql.ConflictOption) *DailyUniqueUserUpsertOne {
+	_c.conflict = opts
+	return &DailyUniqueUserUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.DailyUniqueUser.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *DailyUniqueUserCreate) OnConflictColumns(columns ...string) *DailyUniqueUserUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &DailyUniqueUserUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// DailyUniqueUserUpsertOne is the builder for "upsert"-ing
+	//  one DailyUniqueUser node.
+	DailyUniqueUserUpsertOne struct {
+		create *DailyUniqueUserCreate
+	}
+
+	// DailyUniqueUserUpsert is the "OnConflict" setter.
+	DailyUniqueUserUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetDate sets the "date" field.
+func (u *DailyUniqueUserUpsert) SetDate(v string) *DailyUniqueUserUpsert {
+	u.Set(dailyuniqueuser.FieldDate, v)
+	return u
+}
+
+// UpdateDate sets the "date" field to the value that was provided on create.
+func (u *DailyUniqueUserUpsert) UpdateDate() *DailyUniqueUserUpsert {
+	u.SetExcluded(dailyuniqueuser.FieldDate)
+	return u
+}
+
+// SetUserID sets the "user_id" field.
+func (u *DailyUniqueUserUpsert) SetUserID(v uuid.UUID) *DailyUniqueUserUpsert {
+	u.Set(dailyuniqueuser.FieldUserID, v)
+	return u
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *DailyUniqueUserUpsert) UpdateUserID() *DailyUniqueUserUpsert {
+	u.SetExcluded(dailyuniqueuser.FieldUserID)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// Using this option is equivalent to using:
+//
+//	client.DailyUniqueUser.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *DailyUniqueUserUpsertOne) UpdateNewValues() *DailyUniqueUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.DailyUniqueUser.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *DailyUniqueUserUpsertOne) Ignore() *DailyUniqueUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *DailyUniqueUserUpsertOne) DoNothing() *DailyUniqueUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the DailyUniqueUserCreate.OnConflict
+// documentation for more info.
+func (u *DailyUniqueUserUpsertOne) Update(set func(*DailyUniqueUserUpsert)) *DailyUniqueUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&DailyUniqueUserUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetDate sets the "date" field.
+func (u *DailyUniqueUserUpsertOne) SetDate(v string) *DailyUniqueUserUpsertOne {
+	return u.Update(func(s *DailyUniqueUserUpsert) {
+		s.SetDate(v)
+	})
+}
+
+// UpdateDate sets the "date" field to the value that was provided on create.
+func (u *DailyUniqueUserUpsertOne) UpdateDate() *DailyUniqueUserUpsertOne {
+	return u.Update(func(s *DailyUniqueUserUpsert) {
+		s.UpdateDate()
+	})
+}
+
+// SetUserID sets the "user_id" field.
+func (u *DailyUniqueUserUpsertOne) SetUserID(v uuid.UUID) *DailyUniqueUserUpsertOne {
+	return u.Update(func(s *DailyUniqueUserUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *DailyUniqueUserUpsertOne) UpdateUserID() *DailyUniqueUserUpsertOne {
+	return u.Update(func(s *DailyUniqueUserUpsert) {
+		s.UpdateUserID()
+	})
+}
+
+// Exec executes the query.
+func (u *DailyUniqueUserUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for DailyUniqueUserCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *DailyUniqueUserUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *DailyUniqueUserUpsertOne) ID(ctx context.Context) (id int, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *DailyUniqueUserUpsertOne) IDX(ctx context.Context) int {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // DailyUniqueUserCreateBulk is the builder for creating many DailyUniqueUser entities in bulk.
 type DailyUniqueUserCreateBulk struct {
 	config
 	err      error
 	builders []*DailyUniqueUserCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the DailyUniqueUser entities in the database.
@@ -142,6 +320,7 @@ func (_c *DailyUniqueUserCreateBulk) Save(ctx context.Context) ([]*DailyUniqueUs
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -192,6 +371,138 @@ func (_c *DailyUniqueUserCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *DailyUniqueUserCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.DailyUniqueUser.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.DailyUniqueUserUpsert) {
+//			SetDate(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *DailyUniqueUserCreateBulk) OnConflict(opts ...sql.ConflictOption) *DailyUniqueUserUpsertBulk {
+	_c.conflict = opts
+	return &DailyUniqueUserUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.DailyUniqueUser.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *DailyUniqueUserCreateBulk) OnConflictColumns(columns ...string) *DailyUniqueUserUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &DailyUniqueUserUpsertBulk{
+		create: _c,
+	}
+}
+
+// DailyUniqueUserUpsertBulk is the builder for "upsert"-ing
+// a bulk of DailyUniqueUser nodes.
+type DailyUniqueUserUpsertBulk struct {
+	create *DailyUniqueUserCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.DailyUniqueUser.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *DailyUniqueUserUpsertBulk) UpdateNewValues() *DailyUniqueUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.DailyUniqueUser.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *DailyUniqueUserUpsertBulk) Ignore() *DailyUniqueUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *DailyUniqueUserUpsertBulk) DoNothing() *DailyUniqueUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the DailyUniqueUserCreateBulk.OnConflict
+// documentation for more info.
+func (u *DailyUniqueUserUpsertBulk) Update(set func(*DailyUniqueUserUpsert)) *DailyUniqueUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&DailyUniqueUserUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetDate sets the "date" field.
+func (u *DailyUniqueUserUpsertBulk) SetDate(v string) *DailyUniqueUserUpsertBulk {
+	return u.Update(func(s *DailyUniqueUserUpsert) {
+		s.SetDate(v)
+	})
+}
+
+// UpdateDate sets the "date" field to the value that was provided on create.
+func (u *DailyUniqueUserUpsertBulk) UpdateDate() *DailyUniqueUserUpsertBulk {
+	return u.Update(func(s *DailyUniqueUserUpsert) {
+		s.UpdateDate()
+	})
+}
+
+// SetUserID sets the "user_id" field.
+func (u *DailyUniqueUserUpsertBulk) SetUserID(v uuid.UUID) *DailyUniqueUserUpsertBulk {
+	return u.Update(func(s *DailyUniqueUserUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *DailyUniqueUserUpsertBulk) UpdateUserID() *DailyUniqueUserUpsertBulk {
+	return u.Update(func(s *DailyUniqueUserUpsert) {
+		s.UpdateUserID()
+	})
+}
+
+// Exec executes the query.
+func (u *DailyUniqueUserUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the DailyUniqueUserCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for DailyUniqueUserCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *DailyUniqueUserUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

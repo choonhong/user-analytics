@@ -17,7 +17,7 @@ Requires [Docker](https://docs.docker.com/get-docker/).
 go mod tidy
 make run              # builds and starts Postgres + API (foreground)
 # or: make run-detached && curl http://localhost:8080/health
-make test             # Postgres on localhost:5432, then go test
+make test             # Postgres on localhost:5433, then go test
 ```
 
 After changing ent schemas: `make generate`
@@ -31,9 +31,9 @@ Environment (`docker-compose.yml` for the app; `make test` sets `DATABASE_URL` f
 | Variable | App (in Compose) | Tests (`make test` on host) |
 |----------|------------------|-----------------------------|
 | `ADDR` | `:8080` | — |
-| `DATABASE_URL` | `postgres://analytics:analytics@postgres:5432/analytics?sslmode=disable` | `postgres://analytics:analytics@localhost:5432/analytics?sslmode=disable` |
+| `DATABASE_URL` | `postgres://analytics:analytics@postgres:5432/analytics?sslmode=disable` | `postgres://analytics:analytics@localhost:5433/analytics?sslmode=disable` |
 
-Stop any other Postgres on host port `:5432` before `make run` or `make test`.
+Compose maps Postgres to host port **5433** so `make test` does not hit a local Postgres on **5432**.
 
 ## Database design
 
@@ -96,7 +96,7 @@ HTTP: `GET /v1/daily-user-count?date=…` and `GET /v1/monthly-user-count?month=
 
 ### Local PostgreSQL (Docker)
 
-`docker-compose.yml` runs Postgres 16 and the API. The API only runs in Docker; Postgres is on host port **5432** for integration tests.
+`docker-compose.yml` runs Postgres 16 and the API. The API only runs in Docker; Postgres is on host port **5433** for integration tests.
 
 Reset data: `make down` (removes the volume).
 

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/choonhong/user-analytics/db/ent/monthlyuniqueuser"
@@ -18,6 +19,7 @@ type MonthlyUniqueUserCreate struct {
 	config
 	mutation *MonthlyUniqueUserMutation
 	hooks    []Hook
+	conflict []sql.ConflictOption
 }
 
 // SetMonth sets the "month" field.
@@ -98,6 +100,7 @@ func (_c *MonthlyUniqueUserCreate) createSpec() (*MonthlyUniqueUser, *sqlgraph.C
 		_node = &MonthlyUniqueUser{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(monthlyuniqueuser.Table, sqlgraph.NewFieldSpec(monthlyuniqueuser.FieldID, field.TypeInt))
 	)
+	_spec.OnConflict = _c.conflict
 	if value, ok := _c.mutation.Month(); ok {
 		_spec.SetField(monthlyuniqueuser.FieldMonth, field.TypeString, value)
 		_node.Month = value
@@ -109,11 +112,186 @@ func (_c *MonthlyUniqueUserCreate) createSpec() (*MonthlyUniqueUser, *sqlgraph.C
 	return _node, _spec
 }
 
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.MonthlyUniqueUser.Create().
+//		SetMonth(v).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.MonthlyUniqueUserUpsert) {
+//			SetMonth(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *MonthlyUniqueUserCreate) OnConflict(opts ...sql.ConflictOption) *MonthlyUniqueUserUpsertOne {
+	_c.conflict = opts
+	return &MonthlyUniqueUserUpsertOne{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.MonthlyUniqueUser.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *MonthlyUniqueUserCreate) OnConflictColumns(columns ...string) *MonthlyUniqueUserUpsertOne {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &MonthlyUniqueUserUpsertOne{
+		create: _c,
+	}
+}
+
+type (
+	// MonthlyUniqueUserUpsertOne is the builder for "upsert"-ing
+	//  one MonthlyUniqueUser node.
+	MonthlyUniqueUserUpsertOne struct {
+		create *MonthlyUniqueUserCreate
+	}
+
+	// MonthlyUniqueUserUpsert is the "OnConflict" setter.
+	MonthlyUniqueUserUpsert struct {
+		*sql.UpdateSet
+	}
+)
+
+// SetMonth sets the "month" field.
+func (u *MonthlyUniqueUserUpsert) SetMonth(v string) *MonthlyUniqueUserUpsert {
+	u.Set(monthlyuniqueuser.FieldMonth, v)
+	return u
+}
+
+// UpdateMonth sets the "month" field to the value that was provided on create.
+func (u *MonthlyUniqueUserUpsert) UpdateMonth() *MonthlyUniqueUserUpsert {
+	u.SetExcluded(monthlyuniqueuser.FieldMonth)
+	return u
+}
+
+// SetUserID sets the "user_id" field.
+func (u *MonthlyUniqueUserUpsert) SetUserID(v uuid.UUID) *MonthlyUniqueUserUpsert {
+	u.Set(monthlyuniqueuser.FieldUserID, v)
+	return u
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *MonthlyUniqueUserUpsert) UpdateUserID() *MonthlyUniqueUserUpsert {
+	u.SetExcluded(monthlyuniqueuser.FieldUserID)
+	return u
+}
+
+// UpdateNewValues updates the mutable fields using the new values that were set on create.
+// Using this option is equivalent to using:
+//
+//	client.MonthlyUniqueUser.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *MonthlyUniqueUserUpsertOne) UpdateNewValues() *MonthlyUniqueUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.MonthlyUniqueUser.Create().
+//	    OnConflict(sql.ResolveWithIgnore()).
+//	    Exec(ctx)
+func (u *MonthlyUniqueUserUpsertOne) Ignore() *MonthlyUniqueUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *MonthlyUniqueUserUpsertOne) DoNothing() *MonthlyUniqueUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the MonthlyUniqueUserCreate.OnConflict
+// documentation for more info.
+func (u *MonthlyUniqueUserUpsertOne) Update(set func(*MonthlyUniqueUserUpsert)) *MonthlyUniqueUserUpsertOne {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&MonthlyUniqueUserUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetMonth sets the "month" field.
+func (u *MonthlyUniqueUserUpsertOne) SetMonth(v string) *MonthlyUniqueUserUpsertOne {
+	return u.Update(func(s *MonthlyUniqueUserUpsert) {
+		s.SetMonth(v)
+	})
+}
+
+// UpdateMonth sets the "month" field to the value that was provided on create.
+func (u *MonthlyUniqueUserUpsertOne) UpdateMonth() *MonthlyUniqueUserUpsertOne {
+	return u.Update(func(s *MonthlyUniqueUserUpsert) {
+		s.UpdateMonth()
+	})
+}
+
+// SetUserID sets the "user_id" field.
+func (u *MonthlyUniqueUserUpsertOne) SetUserID(v uuid.UUID) *MonthlyUniqueUserUpsertOne {
+	return u.Update(func(s *MonthlyUniqueUserUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *MonthlyUniqueUserUpsertOne) UpdateUserID() *MonthlyUniqueUserUpsertOne {
+	return u.Update(func(s *MonthlyUniqueUserUpsert) {
+		s.UpdateUserID()
+	})
+}
+
+// Exec executes the query.
+func (u *MonthlyUniqueUserUpsertOne) Exec(ctx context.Context) error {
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for MonthlyUniqueUserCreate.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *MonthlyUniqueUserUpsertOne) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// Exec executes the UPSERT query and returns the inserted/updated ID.
+func (u *MonthlyUniqueUserUpsertOne) ID(ctx context.Context) (id int, err error) {
+	node, err := u.create.Save(ctx)
+	if err != nil {
+		return id, err
+	}
+	return node.ID, nil
+}
+
+// IDX is like ID, but panics if an error occurs.
+func (u *MonthlyUniqueUserUpsertOne) IDX(ctx context.Context) int {
+	id, err := u.ID(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // MonthlyUniqueUserCreateBulk is the builder for creating many MonthlyUniqueUser entities in bulk.
 type MonthlyUniqueUserCreateBulk struct {
 	config
 	err      error
 	builders []*MonthlyUniqueUserCreate
+	conflict []sql.ConflictOption
 }
 
 // Save creates the MonthlyUniqueUser entities in the database.
@@ -142,6 +320,7 @@ func (_c *MonthlyUniqueUserCreateBulk) Save(ctx context.Context) ([]*MonthlyUniq
 					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					spec.OnConflict = _c.conflict
 					// Invoke the actual operation on the latest mutation in the chain.
 					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
@@ -192,6 +371,138 @@ func (_c *MonthlyUniqueUserCreateBulk) Exec(ctx context.Context) error {
 // ExecX is like Exec, but panics if an error occurs.
 func (_c *MonthlyUniqueUserCreateBulk) ExecX(ctx context.Context) {
 	if err := _c.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// OnConflict allows configuring the `ON CONFLICT` / `ON DUPLICATE KEY` clause
+// of the `INSERT` statement. For example:
+//
+//	client.MonthlyUniqueUser.CreateBulk(builders...).
+//		OnConflict(
+//			// Update the row with the new values
+//			// the was proposed for insertion.
+//			sql.ResolveWithNewValues(),
+//		).
+//		// Override some of the fields with custom
+//		// update values.
+//		Update(func(u *ent.MonthlyUniqueUserUpsert) {
+//			SetMonth(v+v).
+//		}).
+//		Exec(ctx)
+func (_c *MonthlyUniqueUserCreateBulk) OnConflict(opts ...sql.ConflictOption) *MonthlyUniqueUserUpsertBulk {
+	_c.conflict = opts
+	return &MonthlyUniqueUserUpsertBulk{
+		create: _c,
+	}
+}
+
+// OnConflictColumns calls `OnConflict` and configures the columns
+// as conflict target. Using this option is equivalent to using:
+//
+//	client.MonthlyUniqueUser.Create().
+//		OnConflict(sql.ConflictColumns(columns...)).
+//		Exec(ctx)
+func (_c *MonthlyUniqueUserCreateBulk) OnConflictColumns(columns ...string) *MonthlyUniqueUserUpsertBulk {
+	_c.conflict = append(_c.conflict, sql.ConflictColumns(columns...))
+	return &MonthlyUniqueUserUpsertBulk{
+		create: _c,
+	}
+}
+
+// MonthlyUniqueUserUpsertBulk is the builder for "upsert"-ing
+// a bulk of MonthlyUniqueUser nodes.
+type MonthlyUniqueUserUpsertBulk struct {
+	create *MonthlyUniqueUserCreateBulk
+}
+
+// UpdateNewValues updates the mutable fields using the new values that
+// were set on create. Using this option is equivalent to using:
+//
+//	client.MonthlyUniqueUser.Create().
+//		OnConflict(
+//			sql.ResolveWithNewValues(),
+//		).
+//		Exec(ctx)
+func (u *MonthlyUniqueUserUpsertBulk) UpdateNewValues() *MonthlyUniqueUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithNewValues())
+	return u
+}
+
+// Ignore sets each column to itself in case of conflict.
+// Using this option is equivalent to using:
+//
+//	client.MonthlyUniqueUser.Create().
+//		OnConflict(sql.ResolveWithIgnore()).
+//		Exec(ctx)
+func (u *MonthlyUniqueUserUpsertBulk) Ignore() *MonthlyUniqueUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWithIgnore())
+	return u
+}
+
+// DoNothing configures the conflict_action to `DO NOTHING`.
+// Supported only by SQLite and PostgreSQL.
+func (u *MonthlyUniqueUserUpsertBulk) DoNothing() *MonthlyUniqueUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.DoNothing())
+	return u
+}
+
+// Update allows overriding fields `UPDATE` values. See the MonthlyUniqueUserCreateBulk.OnConflict
+// documentation for more info.
+func (u *MonthlyUniqueUserUpsertBulk) Update(set func(*MonthlyUniqueUserUpsert)) *MonthlyUniqueUserUpsertBulk {
+	u.create.conflict = append(u.create.conflict, sql.ResolveWith(func(update *sql.UpdateSet) {
+		set(&MonthlyUniqueUserUpsert{UpdateSet: update})
+	}))
+	return u
+}
+
+// SetMonth sets the "month" field.
+func (u *MonthlyUniqueUserUpsertBulk) SetMonth(v string) *MonthlyUniqueUserUpsertBulk {
+	return u.Update(func(s *MonthlyUniqueUserUpsert) {
+		s.SetMonth(v)
+	})
+}
+
+// UpdateMonth sets the "month" field to the value that was provided on create.
+func (u *MonthlyUniqueUserUpsertBulk) UpdateMonth() *MonthlyUniqueUserUpsertBulk {
+	return u.Update(func(s *MonthlyUniqueUserUpsert) {
+		s.UpdateMonth()
+	})
+}
+
+// SetUserID sets the "user_id" field.
+func (u *MonthlyUniqueUserUpsertBulk) SetUserID(v uuid.UUID) *MonthlyUniqueUserUpsertBulk {
+	return u.Update(func(s *MonthlyUniqueUserUpsert) {
+		s.SetUserID(v)
+	})
+}
+
+// UpdateUserID sets the "user_id" field to the value that was provided on create.
+func (u *MonthlyUniqueUserUpsertBulk) UpdateUserID() *MonthlyUniqueUserUpsertBulk {
+	return u.Update(func(s *MonthlyUniqueUserUpsert) {
+		s.UpdateUserID()
+	})
+}
+
+// Exec executes the query.
+func (u *MonthlyUniqueUserUpsertBulk) Exec(ctx context.Context) error {
+	if u.create.err != nil {
+		return u.create.err
+	}
+	for i, b := range u.create.builders {
+		if len(b.conflict) != 0 {
+			return fmt.Errorf("ent: OnConflict was set for builder %d. Set it on the MonthlyUniqueUserCreateBulk instead", i)
+		}
+	}
+	if len(u.create.conflict) == 0 {
+		return errors.New("ent: missing options for MonthlyUniqueUserCreateBulk.OnConflict")
+	}
+	return u.create.Exec(ctx)
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (u *MonthlyUniqueUserUpsertBulk) ExecX(ctx context.Context) {
+	if err := u.create.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
