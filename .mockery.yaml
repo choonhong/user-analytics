@@ -1,0 +1,12 @@
+all: false
+dir: "{{.InterfaceDir}}/mocks"
+filename: mock_{{.InterfaceName}}.go
+pkgname: mocks
+structname: Mock{{.InterfaceName}}
+template: testify
+formatter: goimports
+force-file-write: true
+packages:
+  github.com/choonhong/user-analytics/internal/service:
+    interfaces:
+      LoginRepository:

@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: User Analytics API
+  description: Tracks user logins and returns daily and monthly unique user counts as JSON integers.
+  version: 1.0.0
+  contact:
+    name: User Analytics Service
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: logins
+    description: Ingest user login events
+  - name: counts
+    description: Unique user counts
+
+paths:
+  /v1/logins:
+    post:
+      tags: [logins]
+      summary: Record a single login
+      description: Records one login event. Updates daily and monthly rollup tables in the same transaction.
+      operationId: recordLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              withTime:
+                summary: Explicit login time
+                value:
+                  user_id: 550e8400-e29b-41d4-a716-446655440000
+                  login_time: '2026-06-03T12:00:00Z'
+              withoutTime:
+                summary: Server-assigned UTC time
+                value:
+                  user_id: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '201':
+          description: Login recorded
+        '400':
+          description: Invalid request (e.g. malformed UUID or timestamp)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: invalid user_id
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/daily-user-count:
+    get:
+      tags: [counts]
+      summary: GetDailyUserCount
+      description: Returns the count of unique users for the given UTC calendar day (`YYYY-MM-DD`).
+      operationId: getDailyUserCount
+      parameters:
+        - name: date
+          in: query
+          required: true
+          description: UTC calendar date
+          schema:
+            type: string
+            format: date
+            example: '2026-06-03'
+      responses:
+        '200':
+          description: Unique user count (integer)
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+                minimum: 0
+              example: 42
+        '400':
+          description: Invalid date format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/monthly-user-count:
+    get:
+      tags: [counts]
+      summary: GetMonthlyUserCount
+      description: Returns the count of unique users for the given UTC calendar month (`YYYY-MM`).
+      operationId: getMonthlyUserCount
+      parameters:
+        - name: month
+          in: query
+          required: true
+          description: UTC calendar month
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+            example: '2026-06'
+      responses:
+        '200':
+          description: Unique user count (integer)
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+                minimum: 0
+              example: 1280
+        '400':
+          description: Invalid month format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+      description: RFC 4122 UUID
+      example: 550e8400-e29b-41d4-a716-446655440000
+
+    LoginRequest:
+      type: object
+      required: [user_id]
+      properties:
+        user_id:
+          $ref: '#/components/schemas/UUID'
+        login_time:
+          type: string
+          format: date-time
+          description: Login instant in UTC (RFC 3339). Defaults to server time if omitted.
+          example: '2026-06-03T12:00:00Z'
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: invalid user_id
