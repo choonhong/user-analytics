@@ -19,6 +19,8 @@ make run        # http://localhost:8080
 
 After changing ent schemas: `make generate`
 
+After changing `LoginRepository` or `AnalyticsService` interfaces: `make mocks` (requires [mockery](https://github.com/vektra/mockery) v3)
+
 Environment:
 
 | Variable | Default | Description |
@@ -72,8 +74,12 @@ Each login runs in one transaction:
 
 ### Query (read path)
 
-- `GetDailyUserCount(date)` → `SELECT COUNT(*) FROM daily_unique_users WHERE date = ?`
-- `GetMonthlyUserCount(month)` → `SELECT COUNT(*) FROM monthly_unique_users WHERE month = ?`
+Service methods (assignment names in parentheses):
+
+- `GetDailyUserCount(date)` (`GetDailyUniqueUsers`) → `SELECT COUNT(*) FROM daily_unique_users WHERE date = ?`
+- `GetMonthlyUserCount(month)` (`GetMonthlyUniqueUsers`) → `SELECT COUNT(*) FROM monthly_unique_users WHERE month = ?`
+
+HTTP: `GET /v1/daily-user-count?date=…` and `GET /v1/monthly-user-count?month=…` return the count as a JSON integer.
 
 ### Assumptions
 
@@ -81,13 +87,13 @@ Each login runs in one transaction:
 - `user_id` is a UUID (stored as `TEXT` in SQLite).
 - Schema is applied via ent **auto-migrate** (`Schema.Create` on startup).
 
-### PostgreSQL portability
+### SQLite for the take-home, PostgreSQL for production
 
-Same logical model: `SERIAL`, `TIMESTAMP WITHOUT TIME ZONE`, native `UUID`, and the same unique/primary keys. Change ent dialect and DSN only.
+This repo runs on **SQLite** (`DATABASE_PATH`, pure Go driver) so you can clone, test, and demo with no extra services. The assignment asks for a cloud-compatible **relational** database; the same design maps directly to **PostgreSQL** (`SERIAL`, `TIMESTAMP WITHOUT TIME ZONE`, native `UUID`, identical unique/primary keys). For production you would point ent at a Postgres DSN, use versioned migrations instead of startup auto-migrate, and keep the rollup + event model unchanged.
 
 ## API
 
-OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml). Preview: [docs/README.md](docs/README.md).
+OpenAPI spec: [docs/openapi.yaml](docs/openapi.yaml). Clickable requests: [api.http](api.http) (VS Code **REST Client** extension).
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -111,6 +117,24 @@ curl -s 'http://localhost:8080/v1/monthly-user-count?month=2026-06'
 # 1
 ```
 
+### Manual test walkthrough
+
+Use a **fresh database** so counts are predictable (delete `./data/analytics.db` if you have run the server before).
+
+1. Start the server: `make run`
+2. Install the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension and open [api.http](api.http)
+3. Send these requests in order (use **Send Request** above each `###` block):
+   - **Health** — expect `ok`
+   - **Record login (user 1)** — `201`
+   - **Record login (user 1 duplicate — idempotent)** — `201` (no extra unique user)
+   - **Record login (user 2, same day)** — `201`
+   - **Daily unique user count** — response body: `2`
+   - **Monthly unique user count** — response body: `2`
+
+The server log should show sentences like `Found 2 unique users on 2026-06-03.` and `Found 2 unique users in 2026-06.`
+
+Skip **Record login (no login_time)** during this walkthrough unless you want counts tied to today’s UTC date.
+
 ## Project layout
 
 ```
@@ -121,6 +145,7 @@ internal/domain/     shared errors and UTC date/month formats
 internal/service/    business logic
 internal/repository/ ent persistence
 docs/openapi.yaml    API contract
+api.http             REST Client sample requests
 ```
 
 ## Tests
@@ -129,5 +154,5 @@ docs/openapi.yaml    API contract
 go test ./...
 ```
 
-- Unit tests: service (mock repo), API (httptest)
+- Unit tests: service and API layers use [mockery](https://github.com/vektra/mockery) mocks (`make mocks` to regenerate)
 - Integration tests: repository against in-memory SQLite

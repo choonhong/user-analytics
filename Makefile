@@ -1,7 +1,10 @@
-.PHONY: generate test run
+.PHONY: generate mocks test run
 
 generate:
 	go generate ./ent/...
+
+mocks:
+	mockery
 
 test:
 	go test ./...
