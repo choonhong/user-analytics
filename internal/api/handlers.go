@@ -8,15 +8,14 @@ import (
 	"time"
 
 	"github.com/choonhong/user-analytics/internal/domain"
-	"github.com/choonhong/user-analytics/internal/service"
 	"github.com/google/uuid"
 )
 
 type Handler struct {
-	svc *service.AnalyticsService
+	svc AnalyticsService
 }
 
-func NewHandler(svc *service.AnalyticsService) *Handler {
+func NewHandler(svc AnalyticsService) *Handler {
 	return &Handler{svc: svc}
 }
 

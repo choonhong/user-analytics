@@ -7,6 +7,9 @@ template: testify
 formatter: goimports
 force-file-write: true
 packages:
+  github.com/choonhong/user-analytics/internal/api:
+    interfaces:
+      AnalyticsService:
   github.com/choonhong/user-analytics/internal/service:
     interfaces:
       LoginRepository:
