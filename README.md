@@ -148,12 +148,12 @@ Skip **Record login (no login_time)** during this walkthrough unless you want co
 
 ```
 cmd/server/          main
-ent/schema/          ent entities
+db/                  PostgreSQL connection + migrate
+db/ent/schema/       ent entities
 internal/api/        HTTP handlers + router
 internal/domain/     shared errors and UTC date/month formats
 internal/service/    business logic
 internal/repository/ ent persistence
-internal/database/   PostgreSQL connection + migrate
 docs/openapi.yaml    API contract
 api.http             REST Client sample requests
 docker-compose.yml   Postgres + API

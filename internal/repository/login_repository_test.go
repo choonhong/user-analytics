@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/choonhong/user-analytics/ent"
-	"github.com/choonhong/user-analytics/internal/database"
+	"github.com/choonhong/user-analytics/db"
+	"github.com/choonhong/user-analytics/db/ent"
 	"github.com/choonhong/user-analytics/internal/repository"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -85,7 +85,7 @@ func openTestDB(t *testing.T) *ent.Client {
 		t.Skip("DATABASE_URL not set (run make test)")
 	}
 
-	client, db, err := database.Open(ctx)
+	client, db, err := db.Open(ctx)
 	require.NoError(t, err)
 	require.NoError(t, resetDB(ctx, client))
 

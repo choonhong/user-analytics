@@ -4,7 +4,7 @@ ADDR ?= :8080
 .PHONY: generate mocks test run run-detached down docker-up wait-pg
 
 generate:
-	go generate ./ent/...
+	go generate ./db/ent/...
 
 mocks:
 	mockery

@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/choonhong/user-analytics/db"
 	"github.com/choonhong/user-analytics/internal/api"
-	"github.com/choonhong/user-analytics/internal/database"
 	"github.com/choonhong/user-analytics/internal/repository"
 	"github.com/choonhong/user-analytics/internal/service"
 )
@@ -20,12 +20,12 @@ func main() {
 	addr := envOr("ADDR", ":8080")
 
 	ctx := context.Background()
-	client, db, err := database.Open(ctx)
+	client, sqlDB, err := db.Open(ctx)
 	if err != nil {
 		log.Fatalf("database: %v", err)
 	}
 	defer client.Close() //nolint:errcheck
-	defer db.Close()     //nolint:errcheck
+	defer sqlDB.Close()  //nolint:errcheck
 
 	repo := repository.NewLoginRepository(client)
 	svc := service.NewAnalyticsService(repo)

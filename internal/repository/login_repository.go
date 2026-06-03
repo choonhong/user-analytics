@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/choonhong/user-analytics/ent"
-	"github.com/choonhong/user-analytics/ent/dailyuniqueuser"
-	"github.com/choonhong/user-analytics/ent/monthlyuniqueuser"
+	"github.com/choonhong/user-analytics/db/ent"
+	"github.com/choonhong/user-analytics/db/ent/dailyuniqueuser"
+	"github.com/choonhong/user-analytics/db/ent/monthlyuniqueuser"
 	"github.com/choonhong/user-analytics/internal/domain"
 	"github.com/google/uuid"
 )
