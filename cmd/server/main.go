@@ -25,8 +25,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("database: %v", err)
 	}
-	defer client.Close()
-	defer db.Close()
+	defer client.Close() //nolint:errcheck
+	defer db.Close()     //nolint:errcheck
 
 	repo := repository.NewLoginRepository(client)
 	svc := service.NewAnalyticsService(repo)
