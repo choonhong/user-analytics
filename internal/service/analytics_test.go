@@ -16,7 +16,6 @@ import (
 
 func TestRecordLogin(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
-		t.Parallel()
 		userID := uuid.New()
 		timestamp := time.Date(2026, 6, 3, 12, 0, 0, 0, time.UTC)
 
@@ -27,7 +26,6 @@ func TestRecordLogin(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
-		t.Parallel()
 		userID := uuid.New()
 		timestamp := time.Date(2026, 6, 3, 12, 0, 0, 0, time.UTC)
 
@@ -40,8 +38,6 @@ func TestRecordLogin(t *testing.T) {
 
 func TestGetDailyUserCount(t *testing.T) {
 	t.Run("invalid date", func(t *testing.T) {
-		t.Parallel()
-
 		svc, _ := newAnalyticsService(t)
 
 		_, err := svc.GetDailyUserCount(context.Background(), "bad-date")
@@ -49,8 +45,6 @@ func TestGetDailyUserCount(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-
 		svc, repo := newAnalyticsService(t)
 		repo.EXPECT().CountDailyUniqueUsers(mock.Anything, "2026-06-03").Return(5, nil).Once()
 
@@ -60,8 +54,6 @@ func TestGetDailyUserCount(t *testing.T) {
 	})
 
 	t.Run("repo error", func(t *testing.T) {
-		t.Parallel()
-
 		svc, repo := newAnalyticsService(t)
 		repo.EXPECT().CountDailyUniqueUsers(mock.Anything, "2026-06-03").Return(0, errors.New("db down")).Once()
 
@@ -72,8 +64,6 @@ func TestGetDailyUserCount(t *testing.T) {
 
 func TestGetMonthlyUserCount(t *testing.T) {
 	t.Run("invalid month", func(t *testing.T) {
-		t.Parallel()
-
 		svc, _ := newAnalyticsService(t)
 
 		_, err := svc.GetMonthlyUserCount(context.Background(), "2026-13")
@@ -81,8 +71,6 @@ func TestGetMonthlyUserCount(t *testing.T) {
 	})
 
 	t.Run("success", func(t *testing.T) {
-		t.Parallel()
-
 		svc, repo := newAnalyticsService(t)
 		repo.EXPECT().CountMonthlyUniqueUsers(mock.Anything, "2026-06").Return(10, nil).Once()
 

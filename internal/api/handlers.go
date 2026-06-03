@@ -51,19 +51,14 @@ func (h *Handler) RecordLogin(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetDailyUserCount(w http.ResponseWriter, r *http.Request) {
 	date := r.URL.Query().Get("date")
-	if date == "" {
-		writeError(w, http.StatusBadRequest, "date query parameter is required")
+	if err := validateDateParam(date); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 
 		return
 	}
 
 	count, err := h.svc.GetDailyUserCount(r.Context(), date)
 	if err != nil {
-		if isValidationErr(err) {
-			writeError(w, http.StatusBadRequest, err.Error())
-
-			return
-		}
 		writeError(w, http.StatusInternalServerError, "failed to get daily count")
 
 		return
@@ -74,19 +69,14 @@ func (h *Handler) GetDailyUserCount(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetMonthlyUserCount(w http.ResponseWriter, r *http.Request) {
 	month := r.URL.Query().Get("month")
-	if month == "" {
-		writeError(w, http.StatusBadRequest, "month query parameter is required")
+	if err := validateMonthParam(month); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 
 		return
 	}
 
 	count, err := h.svc.GetMonthlyUserCount(r.Context(), month)
 	if err != nil {
-		if isValidationErr(err) {
-			writeError(w, http.StatusBadRequest, err.Error())
-
-			return
-		}
 		writeError(w, http.StatusInternalServerError, "failed to get monthly count")
 
 		return
@@ -118,6 +108,24 @@ func parseLoginRequest(req loginRequest) (uuid.UUID, time.Time, error) {
 	return userID, loginTime, nil
 }
 
-func isValidationErr(err error) bool {
-	return errors.Is(err, domain.ErrInvalidDate) || errors.Is(err, domain.ErrInvalidMonth)
+func validateDateParam(date string) error {
+	if date == "" {
+		return errors.New("date query parameter is required")
+	}
+	if _, err := time.ParseInLocation(domain.DateLayout, date, time.UTC); err != nil {
+		return domain.ErrInvalidDate
+	}
+
+	return nil
+}
+
+func validateMonthParam(month string) error {
+	if month == "" {
+		return errors.New("month query parameter is required")
+	}
+	if _, err := time.ParseInLocation(domain.MonthLayout, month, time.UTC); err != nil {
+		return domain.ErrInvalidMonth
+	}
+
+	return nil
 }

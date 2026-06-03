@@ -19,7 +19,6 @@ import (
 
 func TestLoginRepository(t *testing.T) {
 	t.Run("rollups and idempotency", func(t *testing.T) {
-		t.Parallel()
 		repo := newLoginRepository(t)
 		ctx := context.Background()
 
@@ -51,7 +50,6 @@ func TestLoginRepository(t *testing.T) {
 	})
 
 	t.Run("month boundary", func(t *testing.T) {
-		t.Parallel()
 		repo := newLoginRepository(t)
 		ctx := context.Background()
 
