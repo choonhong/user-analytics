@@ -4,6 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
@@ -12,6 +15,10 @@ import (
 )
 
 func Open(ctx context.Context, dsn string) (*ent.Client, *sql.DB, error) {
+	if err := ensureDBDir(dsn); err != nil {
+		return nil, nil, fmt.Errorf("create database directory: %w", err)
+	}
+
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, nil, fmt.Errorf("open database: %w", err)
@@ -34,4 +41,17 @@ func Open(ctx context.Context, dsn string) (*ent.Client, *sql.DB, error) {
 	}
 
 	return client, db, nil
+}
+
+func ensureDBDir(dsn string) error {
+	if strings.HasPrefix(dsn, "file:") || strings.Contains(dsn, "mode=memory") {
+		return nil
+	}
+
+	dir := filepath.Dir(dsn)
+	if dir == "." || dir == "" {
+		return nil
+	}
+
+	return os.MkdirAll(dir, 0o755)
 }

@@ -1,0 +1,65 @@
+# User Analytics — REST Client requests
+# Install extension: "REST Client" (humao.rest-client), then click "Send Request" above each ### block.
+# Start server first: make run
+
+@baseUrl = http://localhost:8080
+@userId1 = 550e8400-e29b-41d4-a716-446655440000
+@userId2 = 6ba7b810-9dad-11d1-80b4-00c04fd430c8
+
+### Health
+GET {{baseUrl}}/health
+
+### Record login (user 1)
+POST {{baseUrl}}/v1/logins
+Content-Type: application/json
+
+{
+  "user_id": "{{userId1}}",
+  "login_time": "2026-06-03T10:00:00Z"
+}
+
+### Record login (user 1 duplicate — idempotent)
+POST {{baseUrl}}/v1/logins
+Content-Type: application/json
+
+{
+  "user_id": "{{userId1}}",
+  "login_time": "2026-06-03T10:00:00Z"
+}
+
+### Record login (user 2, same day)
+POST {{baseUrl}}/v1/logins
+Content-Type: application/json
+
+{
+  "user_id": "{{userId2}}",
+  "login_time": "2026-06-03T18:00:00Z"
+}
+
+### Record login (no login_time — server uses now UTC)
+POST {{baseUrl}}/v1/logins
+Content-Type: application/json
+
+{
+  "user_id": "{{userId1}}"
+}
+
+### Daily unique user count
+GET {{baseUrl}}/v1/daily-user-count?date=2026-06-03
+
+### Monthly unique user count
+GET {{baseUrl}}/v1/monthly-user-count?month=2026-06
+
+### Daily count — missing date (400)
+GET {{baseUrl}}/v1/daily-user-count
+
+### Daily count — invalid date (400)
+GET {{baseUrl}}/v1/daily-user-count?date=bad-date
+
+### Record login — invalid user_id (400)
+POST {{baseUrl}}/v1/logins
+Content-Type: application/json
+
+{
+  "user_id": "not-a-uuid"
+}

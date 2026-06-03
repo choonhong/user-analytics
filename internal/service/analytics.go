@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/choonhong/user-analytics/internal/domain"
@@ -17,7 +18,14 @@ func NewAnalyticsService(repo LoginRepository) *AnalyticsService {
 }
 
 func (s *AnalyticsService) RecordLogin(ctx context.Context, userID uuid.UUID, loginTime time.Time) error {
-	return s.repo.RecordLoginTx(ctx, userID, loginTime.UTC())
+	loginTime = loginTime.UTC()
+	if err := s.repo.RecordLoginTx(ctx, userID, loginTime); err != nil {
+		return err
+	}
+
+	log.Printf("Recorded login for user %s at %s.", userID, loginTime.Format(time.RFC3339))
+
+	return nil
 }
 
 func (s *AnalyticsService) GetDailyUserCount(ctx context.Context, date string) (int, error) {
@@ -25,7 +33,14 @@ func (s *AnalyticsService) GetDailyUserCount(ctx context.Context, date string) (
 		return 0, domain.ErrInvalidDate
 	}
 
-	return s.repo.CountDailyUniqueUsers(ctx, date)
+	count, err := s.repo.CountDailyUniqueUsers(ctx, date)
+	if err != nil {
+		return 0, err
+	}
+
+	log.Printf("Found %d unique users on %s.", count, date)
+
+	return count, nil
 }
 
 func (s *AnalyticsService) GetMonthlyUserCount(ctx context.Context, month string) (int, error) {
@@ -33,5 +48,12 @@ func (s *AnalyticsService) GetMonthlyUserCount(ctx context.Context, month string
 		return 0, domain.ErrInvalidMonth
 	}
 
-	return s.repo.CountMonthlyUniqueUsers(ctx, month)
+	count, err := s.repo.CountMonthlyUniqueUsers(ctx, month)
+	if err != nil {
+		return 0, err
+	}
+
+	log.Printf("Found %d unique users in %s.", count, month)
+
+	return count, nil
 }
