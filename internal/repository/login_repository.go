@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/choonhong/user-analytics/db/ent"
@@ -34,10 +35,11 @@ func (r *LoginRepository) RecordLoginTx(ctx context.Context, userID uuid.UUID, l
 	}()
 
 	if err = insertLogin(ctx, tx, userID, loginTime); err != nil {
-		return err
+		return fmt.Errorf("record login (user_id=%s login_time=%s): %w", userID, loginTime, err)
 	}
+
 	if err = insertRollups(ctx, tx, userID, loginTime); err != nil {
-		return err
+		return fmt.Errorf("update rollups (user_id=%s login_time=%s): %w", userID, loginTime, err)
 	}
 
 	return tx.Commit()
@@ -63,15 +65,19 @@ func insertRollups(ctx context.Context, tx *ent.Tx, userID uuid.UUID, loginTime 
 		OnConflictColumns(dailyuniqueuser.FieldDate, dailyuniqueuser.FieldUserID).
 		Ignore().
 		Exec(ctx); err != nil {
-		return err
+		return fmt.Errorf("insert daily unique user (date=%s user_id=%s): %w", date, userID, err)
 	}
 
-	return tx.MonthlyUniqueUser.Create().
+	if err := tx.MonthlyUniqueUser.Create().
 		SetMonth(month).
 		SetUserID(userID).
 		OnConflictColumns(monthlyuniqueuser.FieldMonth, monthlyuniqueuser.FieldUserID).
 		Ignore().
-		Exec(ctx)
+		Exec(ctx); err != nil {
+		return fmt.Errorf("insert monthly unique user (month=%s user_id=%s): %w", month, userID, err)
+	}
+
+	return nil
 }
 
 // CountDailyUniqueUsers returns unique users for a UTC calendar date.
