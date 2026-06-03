@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: analytics
+      POSTGRES_PASSWORD: analytics
+      POSTGRES_DB: analytics
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U analytics -d analytics"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://analytics:analytics@postgres:5432/analytics?sslmode=disable
+      ADDR: ":8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

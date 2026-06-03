@@ -2,19 +2,15 @@ package repository_test
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
-	"strings"
+	"os"
 	"testing"
 	"time"
 
-	"entgo.io/ent/dialect"
-	entsql "entgo.io/ent/dialect/sql"
 	"github.com/choonhong/user-analytics/ent"
+	"github.com/choonhong/user-analytics/internal/database"
 	"github.com/choonhong/user-analytics/internal/repository"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	_ "modernc.org/sqlite"
 )
 
 func TestLoginRepository(t *testing.T) {
@@ -83,21 +79,35 @@ func newLoginRepository(t *testing.T) *repository.LoginRepository {
 
 func openTestDB(t *testing.T) *ent.Client {
 	t.Helper()
+	ctx := context.Background()
 
-	name := strings.ReplaceAll(t.Name(), "/", "-")
-	db, err := sql.Open("sqlite", fmt.Sprintf("file:%s?mode=memory&cache=shared&_fk=1", name))
+	if os.Getenv("DATABASE_URL") == "" {
+		t.Skip("DATABASE_URL not set (run make test)")
+	}
+
+	client, db, err := database.Open(ctx)
 	require.NoError(t, err)
-
-	_, err = db.Exec("PRAGMA foreign_keys = ON")
-	require.NoError(t, err)
-
-	client := ent.NewClient(ent.Driver(entsql.OpenDB(dialect.SQLite, db)))
-	require.NoError(t, client.Schema.Create(context.Background()))
+	require.NoError(t, resetDB(ctx, client))
 
 	t.Cleanup(func() {
+		require.NoError(t, resetDB(ctx, client))
 		require.NoError(t, client.Close())
 		require.NoError(t, db.Close())
 	})
 
 	return client
+}
+
+func resetDB(ctx context.Context, client *ent.Client) error {
+	if _, err := client.MonthlyUniqueUser.Delete().Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := client.DailyUniqueUser.Delete().Exec(ctx); err != nil {
+		return err
+	}
+	if _, err := client.UserLogin.Delete().Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }

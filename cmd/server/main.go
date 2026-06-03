@@ -18,10 +18,9 @@ import (
 
 func main() {
 	addr := envOr("ADDR", ":8080")
-	dbPath := envOr("DATABASE_PATH", "./data/analytics.db")
 
 	ctx := context.Background()
-	client, db, err := database.Open(ctx, dbPath)
+	client, db, err := database.Open(ctx)
 	if err != nil {
 		log.Fatalf("database: %v", err)
 	}
@@ -40,7 +39,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("listening on %s (db=%s)", addr, dbPath)
+		log.Printf("listening on %s (postgres)", addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server: %v", err)
 		}
